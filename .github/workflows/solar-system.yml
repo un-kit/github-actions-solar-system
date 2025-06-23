@@ -1,6 +1,9 @@
 name: Solar System Workflow
 
-on: 
+env: |
+  MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+
+on:
   workflow_dispatch:
   push:
     branches:
