@@ -101,6 +101,8 @@ jobs:
       runs-on: ubuntu-latest
       environment:
         name: development
+      outputs:
+        ingress-url: ${{ steps.save_ingress.outputs.ingress-rul }}
       steps:
         - uses: actions/checkout@v4
         - uses: azure/setup-kubectl@v4
@@ -111,10 +113,12 @@ jobs:
             method: kubeconfig
             kubeconfig: '${{ secrets.KUBECONFIG }}'
         - run: kubectl version --short -o yaml
-        - run: >
+        - id: save_ingress
+          run: >
             echo "INGRESS_IP=$(kubectl -n ingress-nginx get services
             ingress-nginx-controller -o
             jsonpath='{.status.loadBalancer.ingress[0].ip}')" >> $GITHUB_ENV
+            echo "ingress-url=$INGRESS_IP" >> $GITHUB_OUTPUT
           continue-on-error: true
         - uses: cschleiden/replace-tokens@v1
           with:
@@ -127,3 +131,9 @@ jobs:
             IMAGE: ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
             INGRESS_IP: '${{ env.INGRESS_IP }}'
         - run: cat kubernetes/development/*.yaml
+
+    integration-testing:
+      needs: [dev-deploy]
+      uses: ./.github/workflows/reusable-workflow.yml
+      with:
+        ingress-url: ${{ needs.dev-deploy.outputs.ingress-url }}
