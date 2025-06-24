@@ -114,6 +114,10 @@ jobs:
             kubeconfig: '${{ secrets.KUBECONFIG }}'
         - run: kubectl version -o yaml
           continue-on-error: true
+        - run: >
+            kubectl -n ingress-nginx get services
+            ingress-nginx-controller -o
+            jsonpath='{.status.loadBalancer.ingress[0].ip}'
         - id: save_ingress
           run: >
             echo "INGRESS_IP=$(kubectl -n ingress-nginx get services
